@@ -3,24 +3,770 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compiler - Scanner Phase</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Compiler Phases Project</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --gray-color: #bdc3c7;
+            --text-color: #333;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --border-radius: 8px;
+            --box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        h1, h2, h3 {
+            color: var(--dark-color);
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--gray-color);
+            padding-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-top: 15px;
+        }
+
+        .phase {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background-color: var(--card-bg);
+            transition: var(--transition);
+        }
+
+        #phase1 { border-left: 5px solid var(--primary-color); }
+        #phase2 { border-left: 5px solid var(--secondary-color); }
+        #phase3 { border-left: 5px solid var(--success-color); }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 1px solid var(--gray-color);
+            border-radius: var(--border-radius);
+            resize: vertical;
+            font-family: monospace;
+            font-size: 16px;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .button-group button {
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            overflow-x: auto;
+            display: block;
+        }
+
+        th, td {
+            border: 1px solid var(--gray-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--light-color);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--light-color);
+        }
+
+        .token {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            margin: 5px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .identifier { background-color: var(--warning-color); color: white; }
+        .keyword { background-color: #9b59b6; color: white; }
+        .operator { background-color: var(--primary-color); color: white; }
+        .special { background-color: var(--danger-color); color: white; }
+        .number { background-color: var(--success-color); color: white; }
+        .string { background-color: #1abc9c; color: white; }
+        .error { color: var(--danger-color); font-weight: bold; }
+        .success { color: var(--success-color); font-weight: bold; }
+
+        .state-diagram {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        .state {
+            text-align: center;
+            padding: 15px;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .q0 { background-color: var(--primary-color); color: white; }
+        .q1 { background-color: var(--warning-color); color: white; }
+        .q2 { background-color: var(--success-color); color: white; }
+        .q3 { background-color: #9b59b6; color: white; }
+        .qerr { background-color: var(--danger-color); color: white; }
+
+        .arrow {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            color: var(--dark-color);
+        }
+
+        pre {
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            font-family: monospace;
+            line-height: 1.5;
+            margin: 15px 0;
+        }
+
+        .output-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+        }
+
+        .token-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            .phase {
+                padding: 15px;
+            }
+
+            .state {
+                width: 60px;
+                height: 60px;
+                font-size: 14px;
+            }
+
+            .arrow {
+                font-size: 20px;
+            }
+
+            button {
+                padding: 10px 15px;
+                font-size: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.2rem;
+            }
+
+            .state-diagram {
+                gap: 5px;
+            }
+
+            .state {
+                width: 50px;
+                height: 50px;
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            .arrow {
+                font-size: 16px;
+            }
+
+            textarea {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            th, td {
+                padding: 8px;
+                font-size: 14px;
+            }
+
+            .token {
+                font-size: 12px;
+                padding: 3px 6px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Compiler - Scanner Phase</h1>
-        <div class="editor-container">
-            <div class="input-section">
-                <h2>Source Code</h2>
-                <textarea id="sourceCode" placeholder="Enter your source code here..."></textarea>
-                <button id="analyzeBtn">Analyze</button>
+        <h1>Compiler Phases Project</h1>
+        
+        <div class="phase" id="phase1">
+            <h2>Phase 1: Lexical Analyzer</h2>
+            <p>Breaks down the input into tokens (Identifiers, Keywords, Operators, Special Characters)</p>
+            <textarea id="inputCode" placeholder="Enter code to analyze (e.g., x=y+5;)">x=y+5;</textarea>
+            <div class="button-group">
+                <button onclick="analyzeLexically()">Analyze Tokens</button>
             </div>
-            <div class="output-section">
-                <h2>Tokens</h2>
-                <div id="tokenOutput"></div>
+            <div class="output-container" id="tokenOutput"></div>
+        </div>
+        
+        <div class="phase" id="phase2">
+            <h2>Phase 2: Syntax Analysis</h2>
+            <p>Uses a transition table to validate the syntax based on states</p>
+            <div class="state-diagram">
+                <div class="state q0">q0</div>
+                <div class="arrow">→</div>
+                <div class="state q1">q1</div>
+                <div class="arrow">→</div>
+                <div class="state q2">q2</div>
+                <div class="arrow">→</div>
+                <div class="state q3">q3</div>
+                <div class="arrow">→</div>
+                <div class="state qerr">qErr</div>
             </div>
+            <div class="button-group">
+                <button onclick="analyzeSyntax()">Check Syntax</button>
+            </div>
+            <div class="output-container" id="syntaxOutput"></div>
+            <div class="output-container" id="transitionTable"></div>
+        </div>
+        
+        <div class="phase" id="phase3">
+            <h2>Phase 3: Recursive Predictive Parser</h2>
+            <p>Analyzes the grammatical structure of the input</p>
+            <div class="button-group">
+                <button onclick="parseRecursively()">Parse Recursively</button>
+            </div>
+            <div class="output-container" id="parserOutput"></div>
+            <div class="output-container" id="parseTree"></div>
         </div>
     </div>
-    <script src="scanner.js"></script>
+
+    <script>
+        // Keywords for our simple language
+        const keywords = ['if', 'else', 'while', 'for', 'return', 'function'];
+        
+        // Phase 1: Lexical Analyzer
+        function analyzeLexically() {
+            const input = document.getElementById('inputCode').value.trim();
+            const tokens = [];
+            let currentToken = '';
+            let inString = false;
+            let stringDelimiter = '';
+            
+            for (let i = 0; i < input.length; i++) {
+                const char = input[i];
+                
+                // Handle string literals
+                if (inString) {
+                    currentToken += char;
+                    if (char === stringDelimiter) {
+                        tokens.push({ type: 'string', value: currentToken });
+                        currentToken = '';
+                        inString = false;
+                    }
+                    continue;
+                }
+                
+                // Check for string delimiters
+                if (char === '"' || char === "'") {
+                    if (currentToken) {
+                        tokens.push(getTokenType(currentToken));
+                        currentToken = '';
+                    }
+                    inString = true;
+                    stringDelimiter = char;
+                    currentToken += char;
+                    continue;
+                }
+                
+                // Check for whitespace (token delimiter)
+                if (/\s/.test(char)) {
+                    if (currentToken) {
+                        tokens.push(getTokenType(currentToken));
+                        currentToken = '';
+                    }
+                    continue;
+                }
+                
+                // Check for operators and special characters
+                if (/[=+\-*/%<>!&|;(),{}[\]]/.test(char)) {
+                    if (currentToken) {
+                        tokens.push(getTokenType(currentToken));
+                        currentToken = '';
+                    }
+                    tokens.push(getTokenType(char));
+                    continue;
+                }
+                
+                // Continue building current token
+                currentToken += char;
+            }
+            
+            // Add the last token if exists
+            if (currentToken) {
+                tokens.push(getTokenType(currentToken));
+            }
+            
+            // Display tokens
+            const tokenOutput = document.getElementById('tokenOutput');
+            tokenOutput.innerHTML = '<h3>Tokens:</h3><div class="token-container"></div>';
+            
+            const tokenContainer = tokenOutput.querySelector('.token-container');
+            tokens.forEach(token => {
+                const span = document.createElement('span');
+                span.className = `token ${token.type}`;
+                span.textContent = `${token.value} (${token.type})`;
+                span.title = `Type: ${token.type}\nValue: ${token.value}`;
+                tokenContainer.appendChild(span);
+            });
+            
+            return tokens;
+        }
+        
+        function getTokenType(value) {
+            if (keywords.includes(value)) {
+                return { type: 'keyword', value };
+            } else if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
+                return { type: 'identifier', value };
+            } else if (/^[0-9]+(\.[0-9]+)?$/.test(value)) {
+                return { type: 'number', value };
+            } else if (/^[=+\-*/%<>!&|]+$/.test(value)) {
+                return { type: 'operator', value };
+            } else if (/^[;(),{}[\]]$/.test(value)) {
+                return { type: 'special', value };
+            } else if (/^["'].*["']$/.test(value)) {
+                return { type: 'string', value };
+            }
+            return { type: 'unknown', value };
+        }
+        
+        // Phase 2: Syntax Analysis
+        function analyzeSyntax() {
+            const tokens = analyzeLexically();
+            const syntaxOutput = document.getElementById('syntaxOutput');
+            syntaxOutput.innerHTML = '';
+            
+            // Simple syntax checker for assignment statements
+            let state = 'q0';
+            let error = false;
+            let errorMessage = '';
+            let stateTransitions = ['q0'];
+            
+            // Generate transition table
+            const transitionTable = document.getElementById('transitionTable');
+            transitionTable.innerHTML = `
+                <h3>Transition Table:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Current State</th>
+                            <th>Input</th>
+                            <th>Next State</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>q0</td>
+                            <td>identifier</td>
+                            <td>q1</td>
+                        </tr>
+                        <tr>
+                            <td>q1</td>
+                            <td>=</td>
+                            <td>q2</td>
+                        </tr>
+                        <tr>
+                            <td>q2</td>
+                            <td>identifier/number</td>
+                            <td>q3 (accept)</td>
+                        </tr>
+                        <tr>
+                            <td>q2</td>
+                            <td>operator</td>
+                            <td>q4 (expression)</td>
+                        </tr>
+                        <tr>
+                            <td>Any</td>
+                            <td>invalid input</td>
+                            <td>qErr</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            
+            // Check for basic assignment pattern: identifier = (identifier|number|expression) ;
+            if (tokens.length === 0) {
+                error = true;
+                errorMessage = 'Empty input';
+                state = 'qErr';
+            } else if (tokens.length < 3) {
+                error = true;
+                errorMessage = 'Incomplete statement';
+                state = 'qErr';
+            } else {
+                // Check first token is identifier
+                if (tokens[0].type !== 'identifier') {
+                    error = true;
+                    errorMessage = `Expected identifier at start, found ${tokens[0].type}`;
+                    state = 'qErr';
+                } else {
+                    state = 'q1';
+                    stateTransitions.push('q1');
+                }
+                
+                // Check second token is assignment operator
+                if (!error && tokens[1].value !== '=') {
+                    error = true;
+                    errorMessage = `Expected = after identifier, found ${tokens[1].value}`;
+                    state = 'qErr';
+                    stateTransitions.push('qErr');
+                } else if (!error) {
+                    state = 'q2';
+                    stateTransitions.push('q2');
+                }
+                
+                // Check there's something after the =
+                if (!error && tokens.length < 3) {
+                    error = true;
+                    errorMessage = 'Expected expression after =';
+                    state = 'qErr';
+                    stateTransitions.push('qErr');
+                }
+                
+                // Check valid expression
+                if (!error) {
+                    let exprValid = true;
+                    let expectOperator = false;
+                    
+                    for (let i = 2; i < tokens.length; i++) {
+                        const token = tokens[i];
+                        
+                        if (expectOperator) {
+                            if (token.type !== 'operator') {
+                                exprValid = false;
+                                break;
+                            }
+                            expectOperator = false;
+                        } else {
+                            if (token.type !== 'identifier' && token.type !== 'number') {
+                                exprValid = false;
+                                break;
+                            }
+                            expectOperator = true;
+                        }
+                    }
+                    
+                    if (!exprValid && tokens[2].type !== 'identifier' && tokens[2].type !== 'number') {
+                        error = true;
+                        errorMessage = `Invalid expression after =, found ${tokens[2].type}`;
+                        state = 'qErr';
+                        stateTransitions.push('qErr');
+                    } else if (!error) {
+                        state = 'q3'; // Accept state
+                        stateTransitions.push('q3');
+                    }
+                }
+            }
+            
+            // Display syntax check result
+            const resultDiv = document.createElement('div');
+            if (error) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = `Syntax Error: ${errorMessage}`;
+            } else {
+                resultDiv.className = 'success';
+                resultDiv.textContent = 'Syntax is valid!';
+            }
+            
+            syntaxOutput.appendChild(resultDiv);
+            
+            // Show state transitions
+            const statesDiv = document.createElement('div');
+            statesDiv.innerHTML = `
+                <h3>State Transitions:</h3>
+                <p>${stateTransitions.join(' → ')}</p>
+                <p>Final state: <strong>${state}</strong></p>
+            `;
+            syntaxOutput.appendChild(statesDiv);
+            
+            return !error;
+        }
+        
+        // Phase 3: Recursive Predictive Parser
+        function parseRecursively() {
+            const tokens = analyzeLexically();
+            const parserOutput = document.getElementById('parserOutput');
+            parserOutput.innerHTML = '';
+            
+            let index = 0;
+            let parseSuccess = true;
+            let errorMessage = '';
+            
+            function parseAssignment() {
+                if (index >= tokens.length) {
+                    reportError('Unexpected end of input');
+                    return false;
+                }
+                
+                // Assignment -> identifier = Expression ;
+                const identifier = tokens[index];
+                if (identifier.type !== 'identifier') {
+                    reportError(`Expected identifier at start of assignment, found ${identifier.type}`);
+                    return false;
+                }
+                index++;
+                
+                const assignOp = tokens[index];
+                if (!assignOp || assignOp.value !== '=') {
+                    reportError(`Expected = after identifier, found ${assignOp ? assignOp.value : 'end of input'}`);
+                    return false;
+                }
+                index++;
+                
+                if (!parseExpression()) {
+                    return false;
+                }
+                
+                const semicolon = tokens[index];
+                if (semicolon && semicolon.value === ';') {
+                    index++;
+                } else {
+                    reportError('Expected ; at end of statement');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            function parseExpression() {
+                // Expression -> Term (Operator Term)*
+                if (!parseTerm()) {
+                    return false;
+                }
+                
+                while (index < tokens.length) {
+                    const token = tokens[index];
+                    if (token.type === 'operator') {
+                        index++;
+                        if (!parseTerm()) {
+                            return false;
+                        }
+                    } else if (token.value === ';') {
+                        break;
+                    } else {
+                        reportError(`Unexpected token in expression: ${token.value}`);
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            function parseTerm() {
+                // Term -> identifier | number
+                if (index >= tokens.length) {
+                    reportError('Unexpected end of input in term');
+                    return false;
+                }
+                
+                const token = tokens[index];
+                if (token.type === 'identifier' || token.type === 'number') {
+                    index++;
+                    return true;
+                }
+                
+                reportError(`Expected identifier or number, found ${token.type}`);
+                return false;
+            }
+            
+            function reportError(message) {
+                parseSuccess = false;
+                errorMessage = message;
+            }
+            
+            // Start parsing
+            if (parseAssignment()) {
+                if (index === tokens.length) {
+                    const successDiv = document.createElement('div');
+                    successDiv.className = 'success';
+                    successDiv.textContent = 'Parsing successful! Valid assignment statement.';
+                    parserOutput.appendChild(successDiv);
+                    
+                    // Display parse tree
+                    const parseTree = document.getElementById('parseTree');
+                    parseTree.innerHTML = `
+                        <h3>Parse Tree:</h3>
+                        <pre>
+Assignment
+├── Identifier: ${tokens[0].value}
+├── Operator: ${tokens[1].value}
+└── Expression
+    ${buildExpressionTree(tokens.slice(2, -1))}
+                        </pre>
+                    `;
+                } else {
+                    reportError(`Unexpected tokens at position ${index}: ${tokens[index].value}`);
+                }
+            }
+            
+            if (!parseSuccess) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = `Parser Error: ${errorMessage}`;
+                parserOutput.appendChild(errorDiv);
+                
+                const parseTree = document.getElementById('parseTree');
+                parseTree.innerHTML = '';
+            }
+        }
+        
+        function buildExpressionTree(tokens) {
+            if (tokens.length === 0) return '';
+            if (tokens.length === 1) {
+                return `└── ${tokens[0].type}: ${tokens[0].value}`;
+            }
+            
+            let tree = '';
+            let i = 0;
+            let isFirst = true;
+            
+            while (i < tokens.length) {
+                if (i % 2 === 0) {
+                    // Term
+                    if (isFirst) {
+                        tree += `├── Term: ${tokens[i].value}\n`;
+                        isFirst = false;
+                    } else {
+                        tree += `│   └── Term: ${tokens[i].value}\n`;
+                    }
+                } else {
+                    // Operator
+                    tree += `├── Operator: ${tokens[i].value}\n`;
+                }
+                i++;
+            }
+            
+            return tree;
+        }
+    </script>
 </body>
 </html>
